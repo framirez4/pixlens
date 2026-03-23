@@ -1,0 +1,34 @@
+{
+	"name": "my-tesser",
+	"version": "1.0.0",
+	"description": "OCR image text extractor using Ollama",
+	"main": "",
+	"scripts": {
+		"start": "bun src/index.ts",
+		"test": "bun test",
+		"clean": "rm -rf dist",
+		"lint": "biome lint",
+		"format": "biome format",
+		"check": "biome check"
+	},
+	"keywords": [
+		"ocr",
+		"ollama",
+		"image-recognizer"
+	],
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"fs-extra": "^11.3.4",
+		"ollama": "^0.6.3",
+		"sharp": "^0.34.5",
+		"zod": "^4.3.6"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.4.8",
+		"@types/bun": "^1.3.11",
+		"@types/fs-extra": "^8.1.0",
+		"standard": "^13.0.2",
+		"typescript": "^5.0.0"
+	}
+}
