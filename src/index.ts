@@ -1,10 +1,10 @@
 import { exit } from "node:process";
 import { parseArgs } from "node:util";
 import { organizeFiles } from "./file-organizer/file-organizer";
-import { loadConfig } from "./loader/app-loader";
+import { getConfig } from "./loader/app-loader";
 
 const main = async () => {
-	loadConfig();
+	getConfig();
 	const { values } = parseArgs({
 		args: Bun.argv,
 		options: {

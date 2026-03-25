@@ -14,11 +14,6 @@ export const CROP_COORDINATES_SCHEMA = z
 		"All coordinates must be non-negative",
 	);
 
-// Schema for ROOT_FOLDER - file system path
-export const ROOT_FOLDER_SCHEMA = z
-	.string()
-	.min(1, "Root folder is required")
-	.refine((val) => val.length > 0, "Root folder cannot be empty");
 
 // Schema for REGEX_SCHEMA - valid regex pattern
 export const REGEX_SCHEMA = z
@@ -30,8 +25,7 @@ export const REGEX_SCHEMA = z
 
 // Combined environment configuration schema
 export const EnvironmentConfigSchema = z.object({
-	rootFolder: ROOT_FOLDER_SCHEMA,
-	cropCoordinates: CROP_COORDINATES_SCHEMA,
+	cropCoordinates: CROP_COORDINATES_SCHEMA.optional(),
 	ollamaQuery: z.string().min(1, "OLLAMA_QUERY is required"),
 	ollamaModel: z.string().min(1, "OLLAMA_MODEL is required"),
 	organizeMode: z

@@ -1,10 +1,10 @@
 {
-	"name": "my-tesser",
+	"name": "pixlens",
 	"version": "1.0.0",
 	"description": "OCR image text extractor using Ollama",
 	"main": "",
 	"scripts": {
-		"start": "bun src/index.ts",
+		"build": "bun build ./src/index.ts --compile --outfile pixlens",
 		"test": "bun test",
 		"clean": "rm -rf dist",
 		"lint": "biome lint",
