@@ -1,6 +1,6 @@
 import ollama from "ollama";
-import sharp from "sharp";
 import { getConfig } from "../loader/app-loader";
+import isImage from "is-image";
 
 const systemPrompt = `You are an image analysis assistant designed to extract keywords for folder organization.
 
@@ -31,12 +31,8 @@ export const queryImage = async (source: string): Promise<string | null> => {
 	// Validate that the file is an image by checking its metadata
 	// If metadata is unreadable, the file is not an image
 	// Afterwards return null
-	try {
-		const image = sharp(source);
-		await image.metadata();
-	} catch (error) {
-		console.error("Error reading image metadata:", error);
-		return null;
+	if (!isImage(source)) {
+		return null
 	}
 
 	const response = await ollama.chat({
