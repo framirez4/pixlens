@@ -8,16 +8,19 @@ import { renderTree } from "../renderer/renderer";
 import type { MoveInstruction, OrganizerConfig } from "../types/instruction";
 
 /**
- * Organize images from the root directory into user folders based on detected text
+ * Collect move instructions by scanning the root directory and querying images.
+ * Renders a preview tree and returns the generated instructions without executing them.
  */
-export const organizeFiles = async ({
+export const collectMoveInstructions = async ({
 	root,
 	destination = root,
-}: OrganizerConfig): Promise<void> => {
+}: OrganizerConfig): Promise<MoveInstruction[]> => {
 	const configInstance = getConfig();
 	const instructions: MoveInstruction[] = [];
+
 	try {
 		const files = await nodeFs.readdir(root, { withFileTypes: true });
+
 		const queryImageOptions = {
 			model: configInstance.ollamaModel,
 			prompt: configInstance.ollamaQuery,
@@ -25,7 +28,7 @@ export const organizeFiles = async ({
 
 		if (files.length === 0) {
 			logger.warn("No files found in the selected directory.");
-			return;
+			return [];
 		}
 
 		for (const file of files) {
@@ -46,7 +49,7 @@ export const organizeFiles = async ({
 				continue;
 			}
 
-			const newInstruction = {
+			const newInstruction: MoveInstruction = {
 				rootDirectory: root,
 				destinationDirectory: destination,
 				fileName: file.name,
@@ -54,16 +57,27 @@ export const organizeFiles = async ({
 				sourcePath,
 				destinationPath: path.join(destination, extracted, file.name),
 			};
+
 			logger.info({ newInstruction }, "Generated move instruction");
 			instructions.push(newInstruction);
 		}
 
 		renderTree(instructions);
-
-		if (configInstance.organizeMode) {
-			await runInstructions(instructions);
-		}
+		return instructions;
 	} catch (err) {
 		logger.error(err);
+		return [];
+	}
+};
+
+/**
+ * Backwards-compatible wrapper that collects instructions and runs them
+ * when the environment `organizeMode` is enabled.
+ */
+export const organizeFiles = async (config: OrganizerConfig): Promise<void> => {
+	const instructions = await collectMoveInstructions(config);
+	const configInstance = getConfig();
+	if (configInstance.organizeMode) {
+		await runInstructions(instructions);
 	}
 };

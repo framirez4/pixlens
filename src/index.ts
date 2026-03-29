@@ -1,6 +1,8 @@
 import { exit } from "node:process";
+import readline from "node:readline/promises";
 import { parseArgs } from "node:util";
-import { organizeFiles } from "./file-organizer/file-organizer";
+import { collectMoveInstructions } from "./file-organizer/file-organizer";
+import { runInstructions } from "./instruction-runner/instruction-runner";
 import { getConfig } from "./loader/app-loader";
 import { logger } from "./logger/logger";
 import type { OrganizerConfig } from "./types/instruction";
@@ -17,7 +19,7 @@ const main = async () => {
 			destination: {
 				type: "string",
 			},
-			disableOrganize: {
+			yes: {
 				type: "boolean",
 				default: false,
 			},
@@ -38,15 +40,50 @@ const main = async () => {
 		values.destination = values.root;
 	}
 
+	const configInstance = getConfig();
+
 	const organizeConfig: OrganizerConfig = {
 		root: values.root,
 		destination: values.destination,
-		disableOrganize: values.disableOrganize,
-		model: getConfig().ollamaModel,
-		query: getConfig().ollamaQuery,
+		model: configInstance.ollamaModel,
+		query: configInstance.ollamaQuery,
 	};
 
-	await organizeFiles(organizeConfig);
+	const instructions = await collectMoveInstructions(organizeConfig);
+
+	if (!instructions || instructions.length === 0) {
+		logger.info("No move instructions generated; nothing to do.");
+		return;
+	}
+
+	if (values.yes) {
+		await runInstructions(instructions);
+		return;
+	}
+
+	if (!process.stdin.isTTY) {
+		logger.error("Non-interactive environment. Use --yes to auto-confirm.");
+		exit(1);
+	}
+
+	const rl = readline.createInterface({
+		input: process.stdin,
+		output: process.stdout,
+	});
+	try {
+		const answer = (await rl.question("Proceed with moving files? (y/N): "))
+			.trim()
+			.toLowerCase();
+		if (answer === "y" || answer === "yes") {
+			await runInstructions(instructions);
+		} else {
+			logger.info("Operation aborted by user.");
+		}
+	} finally {
+		rl.close();
+	}
 };
 
 main();
+
+//
