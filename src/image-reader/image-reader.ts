@@ -16,8 +16,7 @@ const systemPrompt = `You are an image analysis assistant designed to extract ke
 ## Behavior
 - Focus on extracting practical, organizational keywords
 - Prioritize clarity and consistency over creativity
-- Keywords should be lowercase unless proper nouns are essential`
-
+- Keywords should be lowercase unless proper nouns are essential`;
 
 interface QueryImageOptions {
 	/**
@@ -36,9 +35,12 @@ interface QueryImageOptions {
  * @returns string with the recognized text or null if no text is found
  * @throws Error if source is null or file format is not allowed
  */
-export const queryImage = async (source: string, options: QueryImageOptions): Promise<string | null> => {
+export const queryImage = async (
+	source: string,
+	options: QueryImageOptions,
+): Promise<string | null> => {
 	logger.info({ source }, "👓 Reading path:");
-	
+
 	// Validate that the file is an image by checking its metadata
 	// If metadata is unreadable, the file is not an image
 	// Afterwards return null
@@ -69,7 +71,10 @@ export const queryImage = async (source: string, options: QueryImageOptions): Pr
 		return null;
 	}
 
-	logger.info({ extracted: response.message.content }, `🔍 Recognized text: ${response.message.content}`);
+	logger.info(
+		{ extracted: response.message.content },
+		`🔍 Recognized text: ${response.message.content}`,
+	);
 
 	return response.message.content;
 };

@@ -14,7 +14,6 @@ export const CROP_COORDINATES_SCHEMA = z
 		"All coordinates must be non-negative",
 	);
 
-
 // Schema for REGEX_SCHEMA - valid regex pattern
 export const REGEX_SCHEMA = z
 	.string()

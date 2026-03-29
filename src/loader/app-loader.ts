@@ -13,15 +13,15 @@ export function getConfig(): EnvironmentConfig {
 		ollamaModel: process.env.OLLAMA_MODEL,
 		organizeMode: process.env.ORGANIZE_MODE,
 	});
-	
+
 	if (!result.success) {
 		const errors = result.error.message;
-		logger.error({ errors }, "Error loading configuration")
+		logger.error({ errors }, "Error loading configuration");
 		throw new Error(`Invalid environment configuration: ${errors}`);
 	}
-	
-	logger.debug("Configuration loaded correctly")
-	
+
+	logger.debug("Configuration loaded correctly");
+
 	configInstance = result.data;
 	return configInstance;
 }
