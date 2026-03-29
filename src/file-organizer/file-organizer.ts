@@ -1,51 +1,66 @@
 import nodeFs from "node:fs/promises";
 import path from "node:path";
-import fs from "fs-extra";
 import { queryImage } from "../image-reader/image-reader";
+import { runInstructions } from "../instruction-runner/instruction-runner";
 import { getConfig } from "../loader/app-loader";
+import { logger } from "../logger/logger";
+import { renderTree } from "../renderer/renderer";
+import type { MoveInstruction } from "../types/instruction";
 
 /**
  * Organize images from the root directory into user folders based on detected text
  */
 export const organizeFiles = async (
 	root: string,
-	target: string = root,
+	destination: string = root,
 ): Promise<void> => {
 	const configInstance = getConfig();
+	const instructions: MoveInstruction[] = [];
 	try {
 		const files = await nodeFs.readdir(root, { withFileTypes: true });
+		const queryImageOptions = {
+			model: configInstance.ollamaModel,
+			prompt: configInstance.ollamaQuery,
+		};
 
 		if (files.length === 0) {
-			console.log("No files found in the selected directory.");
+			logger.warn("No files found in the selected directory.");
 			return;
 		}
 
-		for (const fileName of files) {
-			if (!fileName.isFile()) {
-				console.log("Skipping non-file entry:", fileName.name);
+		for (const file of files) {
+			if (!file.isFile()) {
+				logger.warn({ fileName: file.name }, "Skipping non-file entry");
 				continue;
 			}
 
-			const file = path.join(root, fileName.name);
+			const sourcePath = path.join(root, file.name);
 
-			const text = await queryImage(file)
-			if (!text) {
-				console.log("No text detected in image:", file);
+			const extracted = await queryImage(sourcePath, queryImageOptions);
+			
+			if (!extracted) {
+				logger.info({ sourcePath }, "Skipping file with no relevant text detected");
 				continue;
 			}
 
-			console.log("DETECTED TEXT:", text);
+			const newInstruction = {
+				rootDirectory: root,
+				destinationDirectory: destination,
+				fileName: file.name,
+				newSubPath: extracted,
+				sourcePath,
+				destinationPath: path.join(destination, extracted, file.name),
+			};
+			logger.info({ newInstruction }, "Generated move instruction");
+			instructions.push(newInstruction);
+		}
 
-			if (configInstance.organizeMode) {
-				console.log("DETECTED GROUP:", text);
-				const newFolder = text;
-				const newPath = path.join(target, newFolder, fileName.name);
-				console.log("DESTINATION FOLDER:", newFolder);
-				await fs.move(file, newPath);
-				console.log("✅ Moved file to:", newPath);
-			}
+		renderTree(instructions);
+
+		if (configInstance.organizeMode) {
+			await runInstructions(instructions);
 		}
 	} catch (err) {
-		console.error(err);
+		logger.error(err);
 	}
 };
