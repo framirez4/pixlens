@@ -5,15 +5,15 @@ import { runInstructions } from "../instruction-runner/instruction-runner";
 import { getConfig } from "../loader/app-loader";
 import { logger } from "../logger/logger";
 import { renderTree } from "../renderer/renderer";
-import type { MoveInstruction } from "../types/instruction";
+import type { MoveInstruction, OrganizerConfig } from "../types/instruction";
 
 /**
  * Organize images from the root directory into user folders based on detected text
  */
-export const organizeFiles = async (
-	root: string,
-	destination: string = root,
-): Promise<void> => {
+export const organizeFiles = async ({
+	root,
+	destination = root,
+}: OrganizerConfig): Promise<void> => {
 	const configInstance = getConfig();
 	const instructions: MoveInstruction[] = [];
 	try {
@@ -37,9 +37,12 @@ export const organizeFiles = async (
 			const sourcePath = path.join(root, file.name);
 
 			const extracted = await queryImage(sourcePath, queryImageOptions);
-			
+
 			if (!extracted) {
-				logger.info({ sourcePath }, "Skipping file with no relevant text detected");
+				logger.info(
+					{ sourcePath },
+					"Skipping file with no relevant text detected",
+				);
 				continue;
 			}
 

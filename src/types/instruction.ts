@@ -24,3 +24,11 @@ export type MoveInstruction = {
    */
 	destinationPath: string;
 };
+
+export type OrganizerConfig = {
+  root: string;
+  destination?: string;
+  disableOrganize?: boolean;
+  model: string;
+  query: string;
+}

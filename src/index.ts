@@ -3,6 +3,7 @@ import { parseArgs } from "node:util";
 import { organizeFiles } from "./file-organizer/file-organizer";
 import { getConfig } from "./loader/app-loader";
 import { logger } from "./logger/logger";
+import type { OrganizerConfig } from "./types/instruction";
 
 const main = async () => {
 	logger.info("👋 Starting app...");
@@ -10,13 +11,13 @@ const main = async () => {
 	const { values } = parseArgs({
 		args: Bun.argv,
 		options: {
-			source: {
+			root: {
 				type: "string",
 			},
 			destination: {
 				type: "string",
 			},
-			"disable-organize": {
+			disableOrganize: {
 				type: "boolean",
 				default: false,
 			},
@@ -25,8 +26,8 @@ const main = async () => {
 		allowPositionals: true,
 	});
 
-	if (!values.source) {
-		logger.error("Error: --source argument is required");
+	if (!values.root) {
+		logger.error("Error: --root argument is required");
 		exit(1);
 	}
 
@@ -34,10 +35,18 @@ const main = async () => {
 		logger.warn(
 			"Warning: --destination argument is not provided, using source directory as destination",
 		);
-		values.destination = values.source;
+		values.destination = values.root;
 	}
 
-	await organizeFiles(values.source, values.destination);
+	const organizeConfig: OrganizerConfig = {
+		root: values.root,
+		destination: values.destination,
+		disableOrganize: values.disableOrganize,
+		model: getConfig().ollamaModel,
+		query: getConfig().ollamaQuery,
+	};
+
+	await organizeFiles(organizeConfig);
 };
 
 main();
