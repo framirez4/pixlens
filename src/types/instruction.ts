@@ -29,6 +29,8 @@ export type OrganizerConfig = {
 	root: string;
 	destination?: string;
 	disableOrganize?: boolean;
-	model: string;
-	query: string;
+	/** When omitted, falls back to `OLLAMA_MODEL` via getConfig(). */
+	model?: string;
+	/** When omitted, falls back to `OLLAMA_QUERY` via getConfig(). */
+	query?: string;
 };
