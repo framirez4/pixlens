@@ -1,17 +1,25 @@
 import { exit } from "node:process";
-import readline from "node:readline/promises";
 import { parseArgs } from "node:util";
-import { collectMoveInstructions } from "./file-organizer/file-organizer";
-import { runInstructions } from "./instruction-runner/instruction-runner";
-import { getConfig } from "./loader/app-loader";
+import { renderApp } from "./cli/cli";
 import { logger } from "./logger/logger";
-import type { OrganizerConfig } from "./types/instruction";
+
+function hasRequiredForNonInteractive(values: {
+	root?: string;
+	model?: string;
+	query?: string;
+}): boolean {
+	const root = values.root?.trim();
+	const model = values.model?.trim() || process.env.OLLAMA_MODEL?.trim();
+	const query = values.query?.trim() || process.env.OLLAMA_QUERY?.trim();
+	return Boolean(root && model && query);
+}
 
 const main = async () => {
 	logger.info("👋 Starting app...");
-	getConfig();
 	const { values } = parseArgs({
 		args: Bun.argv,
+		strict: true,
+		allowPositionals: true,
 		options: {
 			root: {
 				type: "string",
@@ -19,71 +27,45 @@ const main = async () => {
 			destination: {
 				type: "string",
 			},
+			model: {
+				type: "string",
+			},
+			query: {
+				type: "string",
+			},
 			yes: {
 				type: "boolean",
 				default: false,
 			},
 		},
-		strict: true,
-		allowPositionals: true,
 	});
-
-	if (!values.root) {
-		logger.error("Error: --root argument is required");
-		exit(1);
-	}
-
-	if (!values.destination) {
-		logger.warn(
-			"Warning: --destination argument is not provided, using source directory as destination",
-		);
-		values.destination = values.root;
-	}
-
-	const configInstance = getConfig();
-
-	const organizeConfig: OrganizerConfig = {
-		root: values.root,
-		destination: values.destination,
-		model: configInstance.ollamaModel,
-		query: configInstance.ollamaQuery,
-	};
-
-	const instructions = await collectMoveInstructions(organizeConfig);
-
-	if (!instructions || instructions.length === 0) {
-		logger.info("No move instructions generated; nothing to do.");
-		return;
-	}
-
-	if (values.yes) {
-		await runInstructions(instructions);
-		return;
-	}
 
 	if (!process.stdin.isTTY) {
-		logger.error("Non-interactive environment. Use --yes to auto-confirm.");
-		exit(1);
+		if (!values.yes) {
+			logger.error("Non-interactive environment. Use --yes to auto-confirm.");
+			exit(1);
+		}
+		if (!hasRequiredForNonInteractive(values)) {
+			logger.error(
+				"Non-interactive mode requires --root, --model, and --query (or OLLAMA_MODEL / OLLAMA_QUERY in the environment).",
+			);
+			exit(1);
+		}
 	}
 
-	const rl = readline.createInterface({
-		input: process.stdin,
-		output: process.stdout,
-	});
+	const config = {
+		root: values.root,
+		destination: values.destination,
+		model: values.model,
+		query: values.query,
+	};
+
 	try {
-		const answer = (await rl.question("Proceed with moving files? (y/N): "))
-			.trim()
-			.toLowerCase();
-		if (answer === "y" || answer === "yes") {
-			await runInstructions(instructions);
-		} else {
-			logger.info("Operation aborted by user.");
-		}
-	} finally {
-		rl.close();
+		await renderApp(config, { autoConfirm: values.yes });
+	} catch (err) {
+		logger.error(err);
+		exit(1);
 	}
 };
 
 main();
-
-//

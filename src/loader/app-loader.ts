@@ -3,6 +3,10 @@ import { type EnvironmentConfig, EnvironmentConfigSchema } from "../schemas";
 
 export let configInstance: EnvironmentConfig | null = null;
 
+export function resetConfigCache(): void {
+	configInstance = null;
+}
+
 export function getConfig(): EnvironmentConfig {
 	if (configInstance) {
 		return configInstance;

@@ -1,6 +1,6 @@
 import type { MoveInstruction } from "../types/instruction";
 
-export const renderTree = (instructions: MoveInstruction[]): void => {
+export function formatInstructionTree(instructions: MoveInstruction[]): string {
 	const tree: Record<string, string[]> = {};
 
 	for (const instruction of instructions) {
@@ -11,11 +11,16 @@ export const renderTree = (instructions: MoveInstruction[]): void => {
 		tree[newSubPath].push(fileName);
 	}
 
-	console.log("Organized File Structure:");
+	const lines: string[] = ["Organized File Structure:"];
 	for (const [subPath, files] of Object.entries(tree)) {
-		console.log(`📁 ${subPath}`);
+		lines.push(`📁 ${subPath}`);
 		for (const file of files) {
-			console.log(`   📄 ${file}`);
+			lines.push(`   📄 ${file}`);
 		}
 	}
+	return lines.join("\n");
+}
+
+export const renderTree = (instructions: MoveInstruction[]): void => {
+	console.log(formatInstructionTree(instructions));
 };
