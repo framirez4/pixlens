@@ -1,7 +1,7 @@
 import { Box, Text } from "ink";
 import TextInput from "ink-text-input";
 import type { AppConfig } from "../../types/config";
-import { configRowLabel, configStatus } from "../config-helpers";
+import { configKeys, configRowLabel, configStatus } from "../config-helpers";
 
 type ConfigPhaseProps = {
 	merged: Partial<AppConfig>;
@@ -12,13 +12,6 @@ type ConfigPhaseProps = {
 	setConfigError: (v: string | null) => void;
 	submitConfigField: (value: string) => void | Promise<void>;
 };
-
-const configKeys: (keyof AppConfig)[] = [
-	"root",
-	"destination",
-	"model",
-	"query",
-];
 
 export function ConfigPhase({
 	merged,
@@ -32,24 +25,11 @@ export function ConfigPhase({
 	return (
 		<Box flexDirection="column" marginBottom={1}>
 			<Text bold>Configuration</Text>
-			{configKeys.map((k) => {
-				const st = configStatus(merged, k);
-				const suffix =
-					st === "✓"
-						? k === "query" && merged.query
-							? `: ${merged.query.slice(0, 48)}${merged.query.length > 48 ? "…" : ""}`
-							: k === "root" && merged.root
-								? `: ${merged.root}`
-								: k === "destination" && merged.destination
-									? `: ${merged.destination}`
-									: k === "model" && merged.model
-										? `: ${merged.model}`
-										: ""
-						: "";
+			{configKeys.map((key) => {
+				const status = configStatus(merged, key);
 				return (
-					<Text key={k}>
-						{st} {configRowLabel(k)}
-						{suffix}
+					<Text key={key}>
+						{status} {configRowLabel(key)}: {merged[key]?.toString() ?? ""}
 					</Text>
 				);
 			})}

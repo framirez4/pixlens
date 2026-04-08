@@ -44,18 +44,19 @@ export function configRowLabel(key: keyof AppConfig): string {
 	}
 }
 
+export const configKeys: (keyof AppConfig)[] = ["root", "destination", "model", "query"];
+
 export function configStatus(
 	merged: Partial<AppConfig>,
 	key: keyof AppConfig,
 ): string {
-	const cur = nextConfigField(merged);
-	const order: (keyof AppConfig)[] = ["root", "destination", "model", "query"];
-	const curIdx = cur ? order.indexOf(cur) : order.length;
-	const keyIdx = order.indexOf(key);
-	if (keyIdx < curIdx) {
+	const current = nextConfigField(merged);
+	const currentIdx = current ? configKeys.indexOf(current) : configKeys.length;
+	const keyIdx = configKeys.indexOf(key);
+	if (keyIdx < currentIdx) {
 		return "✓";
 	}
-	if (key === cur) {
+	if (key === current) {
 		return "?";
 	}
 	return "○";
