@@ -4,7 +4,7 @@ export const logger = pino({
 	transport: {
 		targets: [
 			{
-				level: "info",
+				level: "fatal",
 				target: "pino-pretty", // console output
 				options: {},
 			},

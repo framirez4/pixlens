@@ -1,5 +1,5 @@
-import nodeFs from "node:fs/promises";
-import { Box, render, useApp } from "ink";
+import fs from "node:fs/promises";
+import { Box, render, Text, useApp } from "ink";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { AppConfig } from "../types/config";
 import type { MoveInstruction } from "../types/instruction";
@@ -82,53 +82,23 @@ function App({ initialCli }: AppProps) {
 				return;
 			}
 			setConfigError(null);
-			if (field === "root") {
-				const v = value.trim();
-				if (!v) {
-					return;
-				}
-				try {
-					const st = await nodeFs.stat(v);
-					if (!st.isDirectory()) {
-						setConfigError("Path is not a directory");
-						return;
-					}
-				} catch {
-					setConfigError("Directory does not exist or is not readable");
-					return;
-				}
-				setMerged((m) => ({ ...m, root: v }));
+			let v = value.trim();
+			if (!v && field === "destination") {
+				v = merged.root as string;
+			}
+
+			if (!v) {
 				return;
 			}
-			if (field === "destination") {
-				const v = value.trim();
-				setMerged((m) => ({
-					...m,
-					destination: v || (m.root as string),
-				}));
-				return;
-			}
-			if (field === "model") {
-				const v = value.trim();
-				if (!v) {
-					return;
-				}
-				setMerged((m) => ({ ...m, model: v }));
-				return;
-			}
-			if (field === "query") {
-				const v = value.trim();
-				if (!v) {
-					return;
-				}
-				setMerged((m) => ({ ...m, query: v }));
-			}
+
+			setMerged((m) => ({ ...m, [field]: v }));
 		},
 		[merged],
 	);
 
 	return (
-		<Box flexDirection="column">
+		<Box flexDirection="column" borderStyle="single" borderColor="yellow" padding={2}>
+			<Text bold>Phase: {phase}</Text>
 			{phase === "config" && activeField && (
 				<ConfigPhase
 					merged={merged}
