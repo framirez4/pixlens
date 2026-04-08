@@ -3,5 +3,4 @@ await Bun.build({
 	compile: {
 		outfile: "./out/pixlens",
 	},
-	bytecode: true,
 });
