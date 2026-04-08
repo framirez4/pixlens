@@ -20,7 +20,3 @@ export function formatInstructionTree(instructions: MoveInstruction[]): string {
 	}
 	return lines.join("\n");
 }
-
-export const renderTree = (instructions: MoveInstruction[]): void => {
-	console.log(formatInstructionTree(instructions));
-};

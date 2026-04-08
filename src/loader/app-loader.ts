@@ -15,7 +15,6 @@ export function getConfig(): EnvironmentConfig {
 	const result = EnvironmentConfigSchema.safeParse({
 		ollamaQuery: process.env.OLLAMA_QUERY,
 		ollamaModel: process.env.OLLAMA_MODEL,
-		organizeMode: process.env.ORGANIZE_MODE,
 	});
 
 	if (!result.success) {
