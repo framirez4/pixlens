@@ -5,12 +5,49 @@ import {
 	type Dispatch,
 	type SetStateAction,
 	useCallback,
+	useMemo,
 	useState,
 } from "react";
 import type { MoveInstruction } from "../../types/instruction";
-import { formatInstructionTree } from "../renderer";
 
 type ReviewMode = "menu" | "editIndex" | "editPath";
+
+function orderedUniqueSubPaths(instructions: MoveInstruction[]): string[] {
+	const seen = new Set<string>();
+	const order: string[] = [];
+	for (const inst of instructions) {
+		if (!seen.has(inst.newSubPath)) {
+			seen.add(inst.newSubPath);
+			order.push(inst.newSubPath);
+		}
+	}
+	return order;
+}
+
+/** Same grouping as `formatInstructionTree`, with a 1-based index beside each folder row. */
+function formatInstructionTreeWithFolderIndices(
+	instructions: MoveInstruction[],
+): string {
+	const tree: Record<string, string[]> = {};
+	for (const instruction of instructions) {
+		const { newSubPath, fileName } = instruction;
+		if (!tree[newSubPath]) {
+			tree[newSubPath] = [];
+		}
+		tree[newSubPath].push(fileName);
+	}
+	const lines: string[] = ["Organized File Structure:"];
+	let folderIndex = 1;
+	for (const subPath of orderedUniqueSubPaths(instructions)) {
+		const files = tree[subPath] ?? [];
+		lines.push(`${folderIndex} 📁 ${subPath}`);
+		folderIndex += 1;
+		for (const file of files) {
+			lines.push(`   📄 ${file}`);
+		}
+	}
+	return lines.join("\n");
+}
 
 type TreeReviewPhaseProps = {
 	instructions: MoveInstruction[];
@@ -25,10 +62,16 @@ export function TreeReviewPhase({
 	onConfirm,
 	onCancel,
 }: TreeReviewPhaseProps) {
+	const folderOrder = useMemo(
+		() => orderedUniqueSubPaths(instructions),
+		[instructions],
+	);
 	const [reviewMode, setReviewMode] = useState<ReviewMode>("menu");
 	const [editIndexInput, setEditIndexInput] = useState("");
 	const [editPathInput, setEditPathInput] = useState("");
-	const [editTargetIndex, setEditTargetIndex] = useState<number | null>(null);
+	const [editTargetSubPath, setEditTargetSubPath] = useState<string | null>(
+		null,
+	);
 
 	useInput(
 		(input, _key) => {
@@ -50,7 +93,7 @@ export function TreeReviewPhase({
 		(_input, key) => {
 			if (key.escape) {
 				setReviewMode("menu");
-				setEditTargetIndex(null);
+				setEditTargetSubPath(null);
 				setEditIndexInput("");
 				setEditPathInput("");
 			}
@@ -62,18 +105,19 @@ export function TreeReviewPhase({
 
 	const applySubPathEdit = useCallback(
 		(value: string) => {
-			if (editTargetIndex === null) {
+			if (editTargetSubPath === null) {
 				return;
 			}
 			const newSubPath = value.trim();
 			if (!newSubPath) {
 				setReviewMode("menu");
-				setEditTargetIndex(null);
+				setEditTargetSubPath(null);
 				return;
 			}
+			const oldSubPath = editTargetSubPath;
 			setInstructions((prev) =>
-				prev.map((inst, i) => {
-					if (i !== editTargetIndex) {
+				prev.map((inst) => {
+					if (inst.newSubPath !== oldSubPath) {
 						return inst;
 					}
 					return {
@@ -88,50 +132,50 @@ export function TreeReviewPhase({
 				}),
 			);
 			setReviewMode("menu");
-			setEditTargetIndex(null);
+			setEditTargetSubPath(null);
 			setEditPathInput("");
 		},
-		[editTargetIndex, setInstructions],
+		[editTargetSubPath, setInstructions],
 	);
 
 	return (
-		<>
+		<Box flexDirection="column" marginBottom={1}>
+			<Text bold>Review moves</Text>
+			<Text>{formatInstructionTreeWithFolderIndices(instructions)}</Text>
+
 			{reviewMode === "menu" && (
-				<Box flexDirection="column" marginBottom={1}>
-					<Text bold>Review moves</Text>
-					<Text>{formatInstructionTree(instructions)}</Text>
-					<Box marginTop={1} flexDirection="column">
-						<Text color="gray">
-							Indexed files (for edit):{" "}
-							{instructions
-								.map((inst, i) => `${i + 1}. ${inst.fileName}`)
-								.join(", ")}
-						</Text>
-						<Text>
-							[y] confirm and run [n] cancel [e] edit folder by index (Esc
-							leaves edit)
-						</Text>
-					</Box>
+				<Box marginTop={1} flexDirection="column">
+					<Text>
+						[y] confirm and run [n] cancel [e] edit folder by tree index (Esc
+						leaves edit)
+					</Text>
 				</Box>
 			)}
 
 			{reviewMode === "editIndex" && (
-				<Box flexDirection="column">
+				<Box marginTop={1} flexDirection="column">
 					<Text>
-						Enter file index (1–{instructions.length}), Esc to cancel:
+						Enter folder index (1–{folderOrder.length}), Esc to cancel:
 					</Text>
 					<TextInput
 						value={editIndexInput}
 						onChange={setEditIndexInput}
 						onSubmit={(v) => {
+							const folders = folderOrder;
 							const n = Number.parseInt(v.trim(), 10);
-							if (Number.isNaN(n) || n < 1 || n > instructions.length) {
+							if (Number.isNaN(n) || n < 1 || n > folders.length) {
 								setReviewMode("menu");
 								setEditIndexInput("");
 								return;
 							}
-							setEditTargetIndex(n - 1);
-							setEditPathInput(instructions[n - 1]?.newSubPath ?? "");
+							const subPath = folders[n - 1];
+							if (subPath === undefined) {
+								setReviewMode("menu");
+								setEditIndexInput("");
+								return;
+							}
+							setEditTargetSubPath(subPath);
+							setEditPathInput(subPath);
 							setReviewMode("editPath");
 							setEditIndexInput("");
 						}}
@@ -140,9 +184,10 @@ export function TreeReviewPhase({
 			)}
 
 			{reviewMode === "editPath" && (
-				<Box flexDirection="column">
+				<Box marginTop={1} flexDirection="column">
 					<Text>
-						New subfolder for {instructions[editTargetIndex ?? 0]?.fileName}:
+						New subfolder name for 📁 {editTargetSubPath} (all files in this
+						folder):
 					</Text>
 					<TextInput
 						value={editPathInput}
@@ -151,6 +196,6 @@ export function TreeReviewPhase({
 					/>
 				</Box>
 			)}
-		</>
+		</Box>
 	);
 }
