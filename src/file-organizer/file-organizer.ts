@@ -1,10 +1,8 @@
 import nodeFs from "node:fs/promises";
 import path from "node:path";
 import { queryImage } from "../image-reader/image-reader";
-import { runInstructions } from "../instruction-runner/instruction-runner";
 import { getConfig } from "../loader/app-loader";
 import { logger } from "../logger/logger";
-import { renderTree } from "../renderer/renderer";
 import type { MoveInstruction, OrganizerConfig } from "../types/instruction";
 
 export type CollectFileProgressEvent =
@@ -14,8 +12,6 @@ export type CollectFileProgressEvent =
 
 export type CollectMoveInstructionsOptions = {
 	onFileProcessed?: (event: CollectFileProgressEvent) => void;
-	/** When false, skip console tree output (e.g. Ink owns stdout). @default true */
-	renderConsoleTree?: boolean;
 };
 
 function resolveQueryImageOptions(config: OrganizerConfig): {
@@ -34,14 +30,12 @@ function resolveQueryImageOptions(config: OrganizerConfig): {
 
 /**
  * Collect move instructions by scanning the root directory and querying images.
- * Renders a preview tree and returns the generated instructions without executing them.
  */
 export const collectMoveInstructions = async (
 	config: OrganizerConfig,
 	options?: CollectMoveInstructionsOptions,
 ): Promise<MoveInstruction[]> => {
 	const { root, destination = root } = config;
-	const renderConsoleTree = options?.renderConsoleTree !== false;
 	const onFileProcessed = options?.onFileProcessed;
 
 	const queryImageOptions = resolveQueryImageOptions(config);
@@ -102,24 +96,9 @@ export const collectMoveInstructions = async (
 			});
 		}
 
-		if (renderConsoleTree) {
-			renderTree(instructions);
-		}
 		return instructions;
 	} catch (err) {
 		logger.error(err);
 		return [];
-	}
-};
-
-/**
- * Backwards-compatible wrapper that collects instructions and runs them
- * when the environment `organizeMode` is enabled.
- */
-export const organizeFiles = async (config: OrganizerConfig): Promise<void> => {
-	const instructions = await collectMoveInstructions(config);
-	const configInstance = getConfig();
-	if (configInstance.organizeMode) {
-		await runInstructions(instructions);
 	}
 };

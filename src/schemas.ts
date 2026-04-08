@@ -24,13 +24,8 @@ export const REGEX_SCHEMA = z
 
 // Combined environment configuration schema
 export const EnvironmentConfigSchema = z.object({
-	cropCoordinates: CROP_COORDINATES_SCHEMA.optional(),
 	ollamaQuery: z.string().min(1, "OLLAMA_QUERY is required"),
 	ollamaModel: z.string().min(1, "OLLAMA_MODEL is required"),
-	organizeMode: z
-		.string()
-		.transform((val) => val === "true")
-		.default(false),
 });
 
 // Type definition for validated environment config
