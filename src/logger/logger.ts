@@ -1,4 +1,9 @@
+import fs from "node:fs";
+import path from "node:path";
 import pino from "pino";
+
+const logFile = path.resolve("out", "app.log");
+fs.mkdirSync(path.dirname(logFile), { recursive: true });
 
 export const logger = pino({
 	transport: {
@@ -11,7 +16,7 @@ export const logger = pino({
 			{
 				level: "debug",
 				target: "pino/file",
-				options: { destination: "./out/app.log" },
+				options: { destination: logFile },
 			},
 		],
 	},

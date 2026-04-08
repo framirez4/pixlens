@@ -1,4 +1,3 @@
-import fs from "node:fs/promises";
 import { Box, render, Text, useApp } from "ink";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { AppConfig } from "../types/config";
@@ -97,7 +96,12 @@ function App({ initialCli }: AppProps) {
 	);
 
 	return (
-		<Box flexDirection="column" borderStyle="single" borderColor="yellow" padding={2}>
+		<Box
+			flexDirection="column"
+			borderStyle="single"
+			borderColor="yellow"
+			padding={2}
+		>
 			<Text bold>Phase: {phase}</Text>
 			{phase === "config" && activeField && (
 				<ConfigPhase
