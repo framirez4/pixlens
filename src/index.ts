@@ -21,7 +21,7 @@ const main = async () => {
 			},
 			query: {
 				type: "string",
-			}
+			},
 		},
 	});
 

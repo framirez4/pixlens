@@ -44,7 +44,12 @@ export function configRowLabel(key: keyof AppConfig): string {
 	}
 }
 
-export const configKeys: (keyof AppConfig)[] = ["root", "destination", "model", "query"];
+export const configKeys: (keyof AppConfig)[] = [
+	"root",
+	"destination",
+	"model",
+	"query",
+];
 
 export function configStatus(
 	merged: Partial<AppConfig>,
