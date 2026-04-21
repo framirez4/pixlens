@@ -3,12 +3,14 @@ import { Box, Text, useInput } from "ink";
 import TextInput from "ink-text-input";
 import {
 	type Dispatch,
+	type ReactNode,
 	type SetStateAction,
 	useCallback,
 	useMemo,
 	useState,
 } from "react";
 import type { MoveInstruction } from "../../types/instruction";
+import Link from "ink-link";
 
 type ReviewMode = "menu" | "editIndex" | "editPath";
 
@@ -27,26 +29,29 @@ function orderedUniqueSubPaths(instructions: MoveInstruction[]): string[] {
 /** Same grouping as `formatInstructionTree`, with a 1-based index beside each folder row. */
 function formatInstructionTreeWithFolderIndices(
 	instructions: MoveInstruction[],
-): string {
-	const tree: Record<string, string[]> = {};
+) {
+	const lines: ReactNode[] = [];
+	const tree: Record<string, MoveInstruction[]> = {};
 	for (const instruction of instructions) {
-		const { newSubPath, fileName } = instruction;
+		const { newSubPath } = instruction;
 		if (!tree[newSubPath]) {
 			tree[newSubPath] = [];
 		}
-		tree[newSubPath].push(fileName);
+		tree[newSubPath].push(instruction);
 	}
-	const lines: string[] = ["Organized File Structure:"];
+	lines.push(<Text>Organized File Structure:</Text>);
 	let folderIndex = 1;
 	for (const subPath of orderedUniqueSubPaths(instructions)) {
-		const files = tree[subPath] ?? [];
-		lines.push(`${folderIndex} 📁 ${subPath}`);
+		const instructions = tree[subPath] ?? [];
+		lines.push(<Text>{folderIndex} 📁 {subPath}</Text>);
 		folderIndex += 1;
-		for (const file of files) {
-			lines.push(`   📄 ${file}`);
+		for (const instruction of instructions) {
+			const { fileName, sourcePath } = instruction;
+			lines.push(<Text key={fileName}>{"\t"}<Link url={`file://${sourcePath}`}>📄 {fileName}</Link></Text>);
 		}
 	}
-	return lines.join("\n");
+
+	return lines;
 }
 
 type TreeReviewPhaseProps = {
@@ -141,7 +146,7 @@ export function TreeReviewPhase({
 	return (
 		<Box flexDirection="column" marginBottom={1}>
 			<Text bold>Review moves</Text>
-			<Text>{formatInstructionTreeWithFolderIndices(instructions)}</Text>
+			{formatInstructionTreeWithFolderIndices(instructions)}
 
 			{reviewMode === "menu" && (
 				<Box marginTop={1} flexDirection="column">
