@@ -33,4 +33,6 @@ export type OrganizerConfig = {
 	model?: string;
 	/** When omitted, falls back to `OLLAMA_QUERY` via getConfig(). */
 	query?: string;
+	/** When omitted, falls back to `0.0` via getConfig(). */
+	temperature?: number;
 };

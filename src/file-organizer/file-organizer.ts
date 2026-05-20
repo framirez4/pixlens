@@ -17,6 +17,7 @@ export type CollectMoveInstructionsOptions = {
 function resolveQueryImageOptions(config: OrganizerConfig): {
 	model: string;
 	prompt: string;
+	temperature?: number;
 } {
 	if (config.model && config.query) {
 		return { model: config.model, prompt: config.query };
@@ -25,6 +26,7 @@ function resolveQueryImageOptions(config: OrganizerConfig): {
 	return {
 		model: config.model ?? c.ollamaModel,
 		prompt: config.query ?? c.ollamaQuery,
+		temperature: config.temperature,
 	};
 }
 

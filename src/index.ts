@@ -22,6 +22,10 @@ const main = async () => {
 			query: {
 				type: "string",
 			},
+			temperature: {
+				type: "string",
+				optional: true,
+			},
 		},
 	});
 
@@ -30,6 +34,7 @@ const main = async () => {
 		destination: values.destination,
 		model: values.model,
 		query: values.query,
+		temperature: values.temperature ? parseFloat(values.temperature) : undefined,
 	};
 
 	try {

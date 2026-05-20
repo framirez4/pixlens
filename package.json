@@ -1,7 +1,7 @@
 {
 	"name": "pixlens",
 	"version": "1.0.0",
-	"description": "OCR image text extractor using Ollama",
+	"description": "Vision chat app using Ollama",
 	"main": "",
 	"scripts": {
 		"build": "bun build.ts",

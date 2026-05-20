@@ -7,7 +7,7 @@ const systemPrompt = `You are an image analysis assistant designed to extract ke
 ## Output Requirements
 - Return ONLY a short text response: one or more words suitable as folder names
 - Use simple, filesystem-safe names (no special characters, no spaces between words, use hyphens or underscores if needed)
-- Separate multiple keywords with commas if returning more than one
+- Return ONE label per image. If the label has multiple words, use a hyphen to join them.
 - When no relevant content is found, return an empty string: ""
 - NEVER return text that is not directly relevant to folder naming (e.g., do not include explanations, justifications, or any additional text)
 - It is crucial to adhere strictly to these output requirements to ensure the response can be used directly for organizing files without further processing.
@@ -27,6 +27,10 @@ interface QueryImageOptions {
 	 * The user prompt to use for the query
 	 */
 	prompt: string;
+	/**
+	 * The temperature to use for the query
+	 */
+	temperature?: number;
 }
 
 /**
@@ -52,6 +56,9 @@ export const queryImage = async (
 	const response = await ollama.chat({
 		model: options.model,
 		think: false,
+		options: {
+			temperature: options.temperature || 0.0,
+		},
 		messages: [
 			{
 				role: "system",
@@ -59,7 +66,7 @@ export const queryImage = async (
 			},
 			{
 				role: "user",
-				content: options.prompt,
+				content: `Apply the rules above. Task: ${options.prompt}`,
 				images: [source],
 			},
 		],
